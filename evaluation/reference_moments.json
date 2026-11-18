@@ -1,0 +1,13 @@
+{
+  "note": "Reference moments an editor would very likely cut a promo around. Drafted with AI help from the loglines and scripts; an editor should confirm or replace them. Each moment is located by an anchor line, not by a guessed timestamp.",
+  "moments": [
+    {"id": "R1", "episode": 1,  "anchor": "Because he is marrying me", "why": "jilted at the altar for her sister"},
+    {"id": "R2", "episode": 3,  "anchor": "drops onto one knee", "why": "scarred stranger proposes in front of everyone"},
+    {"id": "R3", "episode": 23, "anchor": "Arsenic.", "why": "poisoning discovered, someone at the door"},
+    {"id": "R4", "episode": 24, "anchor": "riding crop", "why": "noblewoman strikes Juliana"},
+    {"id": "R5", "episode": 31, "anchor": "red-hot", "why": "branding iron in the dungeon"},
+    {"id": "R6", "episode": 41, "anchor": "entire cathedral entrance explodes", "why": "rescue explosion at the wedding"},
+    {"id": "R7", "episode": 42, "anchor": "The rightful Duke of Ashburn", "why": "hidden identity revealed (spoiler: re-targeting)"},
+    {"id": "R8", "episode": 45, "anchor": "without a Crown marriage license", "why": "marriage declared invalid (spoiler)"}
+  ]
+}

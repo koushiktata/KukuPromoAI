@@ -1,0 +1,19 @@
+# First visit opens in this dark theme. The sidebar toggle then switches between Streamlit's built-in
+# Light / Dark presets (the only themes Streamlit keeps across reloads); the app's CSS
+# (frontend/components/theme.py) supplies the full palette for each mode, including widget accents.
+[theme]
+base = "dark"
+primaryColor = "#FF4F8B"
+backgroundColor = "#0A0D1F"
+secondaryBackgroundColor = "#151B38"
+textColor = "#F5F3FF"
+font = "Inter, sans-serif"
+baseRadius = "0.75rem"
+buttonRadius = "0.7rem"
+
+[server]
+headless = true
+port = 8501
+
+[browser]
+gatherUsageStats = false

@@ -1,0 +1,27 @@
+# --- Confidential: Kuku's screenplays and anything derived from their text ---
+data/scripts/
+data/shows/
+*.txt
+!requirements.txt
+!prompts/*.txt
+outputs/
+# (raw outputs are submitted separately as a private folder, never in a public repo)
+
+# secrets
+.env
+*.key
+
+# python / tooling
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+*.db
+*.db-wal
+*.db-shm
+.DS_Store
+
+# benchmark results quote screenplay lines; they live in the private Drive raw outputs
+evaluation/benchmark.*
+docs/solution.html
