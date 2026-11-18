@@ -38,13 +38,28 @@ def _check(provider: str) -> None:
 
 @router.get("/keys")
 def list_keys():
-    return {"providers": [_status(p) for p in KEY_PROVIDERS] +
+    rows = [_status(p) for p in KEY_PROVIDERS]
+    if keys_locked():                       # don't reveal even the last 4 characters on a public deployment
+        for r in rows:
+            r["hint"] = "set by the app owner" if r["set"] else ""
+    return {"locked": keys_locked(), "providers": rows +
             [{"provider": "ollama", "set": True, "hint": "local, no key", "env_var": "",
               "default_model": PRESETS["ollama"][1], "get_key_url": "https://ollama.com"}]}
 
 
+def keys_locked() -> bool:
+    """Hosted/public deployments: keys come only from the host's secrets, never from the web page."""
+    return os.getenv("KUKU_LOCK_KEYS", "").lower() in ("1", "true", "yes")
+
+
+def _guard() -> None:
+    if keys_locked():
+        raise HTTPException(403, "API keys are managed by the app owner on this deployment (host secrets)")
+
+
 @router.put("/keys/{provider}")
 def save_key(provider: str, body: KeyIn):
+    _guard()
     _check(provider)
     key = body.api_key.strip()
     if not KEY_RE.match(key):
@@ -55,6 +70,7 @@ def save_key(provider: str, body: KeyIn):
 
 @router.delete("/keys/{provider}")
 def remove_key(provider: str):
+    _guard()
     _check(provider)
     write_env_value(env_key_name(provider), None)
     return _status(provider)

@@ -13,6 +13,7 @@ class Health(BaseModel):
     provider: str
     api_key_set: bool
     keys_present: list[str] = Field(default_factory=list)   # provider names only, never the keys
+    keys_locked: bool = False                                 # hosted: keys only via host secrets
     running_run: str | None = None
 
 

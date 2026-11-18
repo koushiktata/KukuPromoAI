@@ -45,4 +45,6 @@ def health():
                if generic or os.getenv(f"{p.upper()}_API_KEY")] + ["ollama"]
     return Health(status="ok", version=VERSION, data_files=len(list(settings.data_dir.glob("*.txt"))),
                   provider=settings.llm_provider if settings.llm_provider != "mock" else "mock (offline heuristic)",
-                  api_key_set=bool(settings.api_key()), keys_present=present, running_run=orch.running())
+                  api_key_set=bool(settings.api_key()), keys_present=present,
+                  keys_locked=os.getenv('KUKU_LOCK_KEYS', '').lower() in ('1', 'true', 'yes'),
+                  running_run=orch.running())

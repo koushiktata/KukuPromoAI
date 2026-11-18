@@ -21,6 +21,11 @@ def key_panel(p: dict, model: str = "", prefix: str = "") -> None:
         st.markdown(f"{pill('no key needed', 'ok')} Ollama runs locally at <code>localhost:11434</code>.",
                     unsafe_allow_html=True)
         return
+    if st.session_state.get("_keys_locked"):
+        # hosted deployment: keys come from the host's secrets; visitors can't see, add or remove them
+        st.markdown(pill("✓ available on this app" if p["set"] else "not set up on this app",
+                         "ok" if p["set"] else "mute"), unsafe_allow_html=True)
+        return
     if p["set"]:
         st.markdown(f"{pill('✓ key saved ' + p['hint'], 'ok')} {pill(p['env_var'], 'mute')}", unsafe_allow_html=True)
     else:
@@ -67,7 +72,12 @@ def render():
     if h:
         st.markdown(f"Backend {pill('online', 'ok')} {pill(api.BACKEND, 'mute')} {pill(str(h['data_files']) + ' screenplay files', 'info')}"
                     f" {pill('server default: ' + h['provider'], 'mute')}", unsafe_allow_html=True)
-    keys = {p["provider"]: p for p in api.safe_get("/api/settings/keys", {}, {"providers": []})["providers"]}
+    kd = api.safe_get("/api/settings/keys", {}, {"providers": [], "locked": False})
+    st.session_state["_keys_locked"] = bool(kd.get("locked"))
+    keys = {p["provider"]: p for p in kd["providers"]}
+    if kd.get("locked"):
+        banner("🔒 On this hosted app, API keys are managed by the app owner (host secrets). Offline (mock) "
+               "always works; LLM judges are available only where the owner has set a key.", "info")
     opts = st.session_state.get("run_options") or {}
     saved_provs = opts.get("providers") or ([opts["provider"]] if opts.get("provider") else ["mock"])
     st.markdown("#### Judges")
@@ -99,7 +109,7 @@ def render():
                     key_panel(keys[prov], models[prov])
     st.caption("🔒 Keys are write-only: saved to the backend's git-ignored .env and never shown again (only the "
                "last 4 characters). LLMs only score and explain candidates that code generated; they never set timestamps.")
-    with st.expander("🔑 Manage all API keys"):
+    with st.expander("🔑 Manage all API keys" if not kd.get("locked") else "🔑 LLMs available on this app"):
         for p in keys.values():
             st.markdown(f"**{esc(PROVIDERS.get(p['provider'], p['provider']))}** "
                         f"<span class='kp-muted'>· default model {esc(p['default_model'])}</span>", unsafe_allow_html=True)

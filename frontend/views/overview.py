@@ -59,17 +59,23 @@ def render():
     with ex:
         with st.container(border=True):
             st.markdown("##### 🎬 Or run on a saved show")
-            ids = [x["show_id"] for x in shows] or ["default"]
-            cur = s.get("show_id") if s and s.get("show_id") in ids else ids[0]
-            show_id = st.selectbox("Show", ids, index=ids.index(cur), key="run_show",
-                                   format_func=lambda i: next((f"{x['name']} · {x['files']} episodes" for x in shows
-                                                               if x["show_id"] == i), i))
-            st.markdown(f"<div class='kp-muted' style='margin:.2rem 0 .6rem'>Judges: <b>{esc(_judges_label(opts))}</b> "
-                        f"· change in Settings</div>", unsafe_allow_html=True)
-            if st.button("⏳  Running…" if running else "🎬  Find Promos", type="primary", use_container_width=True,
-                         disabled=running, key="find_promos"):
-                start_run({**opts, "show": show_id})
-                st.rerun()
+            saved = [x for x in shows if x.get("files")]
+            if not saved:
+                st.info("No saved shows yet. Upload a show's episode screenplays on the left to get started.")
+            else:
+                ids = [x["show_id"] for x in saved]
+                if st.session_state.get("run_show") not in ids:
+                    st.session_state.pop("run_show", None)
+                cur = s.get("show_id") if s and s.get("show_id") in ids else ids[0]
+                show_id = st.selectbox("Show", ids, index=ids.index(cur), key="run_show",
+                                       format_func=lambda i: next((f"{x['name']} · {x['files']} episodes"
+                                                                   for x in saved if x["show_id"] == i), i))
+                st.markdown(f"<div class='kp-muted' style='margin:.2rem 0 .6rem'>Judges: "
+                            f"<b>{esc(_judges_label(opts))}</b> · change in Settings</div>", unsafe_allow_html=True)
+                if st.button("⏳  Running…" if running else "🎬  Find Promos", type="primary", use_container_width=True,
+                             disabled=running, key="find_promos"):
+                    start_run({**opts, "show": show_id})
+                    st.rerun()
     follow_run()
     if run and run["status"] == "FAILED":
         last = (run.get("errors") or [{}])[-1]

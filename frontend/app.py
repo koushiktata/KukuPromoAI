@@ -1,12 +1,55 @@
-"""KukuPromo AI - Streamlit frontend. Run from the project root:  streamlit run frontend/app.py"""
+"""KukuPromo AI - Streamlit frontend. Run from the project root:  streamlit run frontend/app.py
+
+Locally you normally run the FastAPI backend yourself (uvicorn backend.main:app --port 8000).
+If no backend is reachable (e.g. on Streamlit Community Cloud), the app starts the same FastAPI
+backend inside this process, and API keys can then only come from the host's secrets."""
+import os
+import socket
 import sys
+import threading
+import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+FRONTEND = Path(__file__).resolve().parent
+sys.path.insert(0, str(FRONTEND))
 
+import requests  # noqa: E402
 import streamlit as st  # noqa: E402
 
 st.set_page_config(page_title="KukuPromo AI", page_icon="🎬", layout="wide", initial_sidebar_state="expanded")
+
+
+def _reachable(url: str) -> bool:
+    try:
+        return requests.get(f"{url}/api/health", timeout=1.5).ok
+    except requests.RequestException:
+        return False
+
+
+@st.cache_resource(show_spinner="Starting the KukuPromo AI engine…")
+def _embedded_backend() -> str:
+    """Run the FastAPI backend in a background thread of this process (once per server)."""
+    import uvicorn
+    sys.path.insert(0, str(FRONTEND.parent))
+    os.chdir(FRONTEND.parent)
+    os.environ["KUKU_LOCK_KEYS"] = "1"          # hosted: keys come from the host's secrets only
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    from backend.main import app as fastapi_app
+    server = uvicorn.Server(uvicorn.Config(fastapi_app, host="127.0.0.1", port=port, log_level="warning"))
+    server.install_signal_handlers = lambda: None   # not the main thread
+    threading.Thread(target=server.run, daemon=True, name="kukupromo-backend").start()
+    url = f"http://127.0.0.1:{port}"
+    for _ in range(100):
+        if _reachable(url):
+            break
+        time.sleep(0.2)
+    return url
+
+
+if not os.getenv("BACKEND_URL") and (os.getenv("KUKU_EMBED_BACKEND") or not _reachable("http://localhost:8000")):
+    os.environ["BACKEND_URL"] = _embedded_backend()
 
 import api_client as api  # noqa: E402
 from components.theme import inject, pill  # noqa: E402

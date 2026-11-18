@@ -200,3 +200,12 @@ def test_upload_show_and_get_timestamps(client):
     assert any("NINA" in line["who"] or "Nina" in line["text"] for seg in tr for line in seg["lines"])     # transcript comes from the new show
     assert client.post("/api/shows", data={"name": "x"},
                        files=[("files", ("bad.txt", b"hello", "text/plain"))]).status_code == 422
+
+
+def test_keys_locked_on_hosted_deployments(client, monkeypatch):
+    monkeypatch.setenv("KUKU_LOCK_KEYS", "1")
+    assert client.put("/api/settings/keys/groq", json={"api_key": "gsk_test_ABCDEFGHIJKLMNOP1234"}).status_code == 403
+    assert client.delete("/api/settings/keys/groq").status_code == 403
+    d = client.get("/api/settings/keys").json()
+    assert d["locked"] and all("••••" not in (p.get("hint") or "") for p in d["providers"])
+    assert client.get("/api/health").json()["keys_locked"] is True
